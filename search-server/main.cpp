@@ -451,24 +451,22 @@ void TestSortingDocumentsByRelevance() {
     //assert(found_docs.size() == 2);
     ASSERT_EQUAL_HINT(found_docs.size(), 2, "Не верное колличество документов при проверке на релевантность");
     const Document& doc0 = found_docs[0];
+    ASSERT_HINT(found_docs[0].relevance > found_docs[1].relevance, "Не верно отсортированы документы по релевантности");
     //assert(doc0.id == 1);
-    ASSERT_EQUAL_HINT(doc0.id, 1, "Не верно отсортированы документы по релевантности");
+    //ASSERT_EQUAL_HINT(doc0.id, 1, "Не верно отсортированы документы по релевантности");
     //const Document& doc0 = found_docs[0];
     //assert(doc0.id == 0);
 }
 
 void TestCalculatingTheDocumentRating() {
+    const vector<int> ratings = { 5, -12, 2, 1 };
+    //const vector<int> ratings2 = { 8, -3 };
     SearchServer server;
-    server.SetStopWords("и в на"s);
-    server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::ACTUAL, { 5, -12, 2, 1 });
-    server.AddDocument(0, "белый кот и модный ошейник"s, DocumentStatus::ACTUAL, { 8, -3 });
-    //server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::ACTUAL, { 5, -12, 2, 1 });
+    server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::ACTUAL, ratings);
     const auto found_docs = server.FindTopDocuments("пушистый ухоженный кот"s);
-    //assert(found_docs.size() == 2);
-    ASSERT_EQUAL_HINT(found_docs.size(), 2, "Не верное колличество документов при проверке на рейтинг");
-    const Document& doc0 = found_docs[0];
-    //assert(doc0.id == 0);
-    ASSERT_EQUAL_HINT(doc0.id, 0, "Не верно считает рейтинг");
+    int rating_sum = accumulate(ratings.begin(), ratings.end(), 0);
+    int rating = rating_sum / static_cast<int>(ratings.size());
+    ASSERT_EQUAL_HINT(found_docs[0].rating, rating, "Не верно считает рейтинг");
 }
 
 void TestFilteringPredicateSearch() {
@@ -490,14 +488,16 @@ void TestSearchForDocumentsWithTheStatus() {
     server.SetStopWords("и в на"s);
     server.AddDocument(0, "белый кот и модный ошейник"s, DocumentStatus::ACTUAL, { 8, -3 });
     server.AddDocument(1, "пушистый кот пушистый хвост"s, DocumentStatus::IRRELEVANT, { 7, 2, 7 });
-    server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::ACTUAL, { 5, -12, 2, 1 });
-    server.AddDocument(3, "ухоженный скворец евгений"s, DocumentStatus::BANNED, { 9 });
-    const auto found_docs = server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::BANNED);
-    //assert(found_docs.size() == 1);
-    ASSERT_EQUAL_HINT(found_docs.size(), 1, "Не верное колличество документов с  заданным статусом");
-    const Document& doc0 = found_docs[0];
-    //assert(doc0.id == 3);
-    ASSERT_EQUAL_HINT(doc0.id, 3, "Не верно обрабатывает статус документов");
+    server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::BANNED, { 5, -12, 2, 1 });
+    server.AddDocument(3, "ухоженный скворец евгений"s, DocumentStatus::REMOVED, { 9 });
+    const auto found_docs0 = server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::ACTUAL);
+    ASSERT_HINT((found_docs0[0].id == 0), "Не обрабатывает статус документов: ACTUAL.");
+    const auto found_docs1 = server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::IRRELEVANT);
+    ASSERT_HINT((found_docs1[0].id == 1), "Не верно обрабатывает статус документов: IRRELEVANT");
+    const auto found_docs2 = server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::BANNED);
+    ASSERT_HINT((found_docs2[0].id == 2), "Не обрабатывает статус документов: BANNED.");
+    const auto found_docs3 = server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::REMOVED);
+    ASSERT_HINT((found_docs3[0].id == 3), "Не обрабатывает статус документов: REMOVED.");
 }
 
 void TestCorrectCalculationOfRelevance() {
