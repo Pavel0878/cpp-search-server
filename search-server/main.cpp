@@ -2,27 +2,10 @@
 #include <iostream>
 
 #include "paginator.h"
-#include "document.h"
 #include "search_server.h"
 #include "request_queue.h"
-#include "read_input_functions.h"
 
 using namespace std;
-
-ostream& operator<<(ostream& output, const Document& document) {
-    return output << "{ "s
-        << "document_id = "s << document.id << ", "s
-        << "relevance = "s << document.relevance << ", "s
-        << "rating = "s << document.rating << " }"s;
-}
-
-template <typename Iterator>
-ostream& operator<<(ostream& out, IteratorRange<Iterator> page) {
-    for (auto it = page.begin(); it != page.end(); ++it) {
-        out << *it;
-    }
-    return out;
-}
 
 int main() {
     SearchServer search_server("and in at"s);
