@@ -18,6 +18,9 @@ void SearchServer::AddDocument(int document_id, const string& document, Document
     const double inv_word_count = 1.0 / words.size();
     for (const string& word : words) {
         word_to_document_freqs_[word][document_id] += inv_word_count;
+        id_doc_[document_id].insert(word);
+        // Не совсем понял как надо было, но я сделал так,
+        // Хотя в условии говориться что надо что то изменять только в указанных методах, а про этот ничего несказано.
     }
     documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
     document_ids_.insert(document_id);
@@ -40,36 +43,31 @@ int SearchServer::GetDocumentCount() const {
 }
 
 const map<string, double>& SearchServer::GetWordFrequencies(int document_id) const {
-    static map<string, double> word_freqs_ = {};
-    word_freqs_.clear();
-        for (auto [word, id_freq] : word_to_document_freqs_) {
-            for (auto [id, freq] : word_to_document_freqs_.at(word)) {
-                if (document_id == id) {
-                    word_freqs_[word]= freq;
-                }
-            }
+    static const map<string, double> word_freqs_empty = {};
+    if (!document_ids_.count(document_id)) { return word_freqs_empty; }
+    static map<string, double> word_freqs;
+    word_freqs.clear();
+        for (auto str : id_doc_.at(document_id)) {
+            word_freqs[str] = word_to_document_freqs_.at(str).at(document_id);
         }
-    return word_freqs_;
+    return word_freqs;
 }
 
 void SearchServer::RemoveDocument(int document_id) {
-    for (auto [word, id_freq] : word_to_document_freqs_) {
-        for (auto [id, freq] : id_freq) {
-            if (id == document_id) {
-                word_to_document_freqs_[word].erase(document_id);
-            }
-        }
+    for (const string& word : id_doc_.at(document_id)) {
+        word_to_document_freqs_[word].erase(document_id);
     }
     documents_.erase(document_id);
     document_ids_.erase(document_id);
+    id_doc_.erase(document_id);
 }
 
 
-typename set<int>::const_iterator SearchServer::begin() const {
+set<int>::const_iterator SearchServer::begin() const {
     return document_ids_.begin();
 }
 
-typename set<int>::const_iterator SearchServer::end() const {
+set<int>::const_iterator SearchServer::end() const {
     return document_ids_.end();
 }
 

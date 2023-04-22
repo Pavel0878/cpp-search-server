@@ -12,8 +12,6 @@
 #include <cmath>
 #include <iterator>
 
-using namespace std::string_literals;
-
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
 class SearchServer {
@@ -40,9 +38,9 @@ public:
 
     void RemoveDocument(int document_id);
 
-    typename std::set<int>::const_iterator begin() const;
+    std::set<int>::const_iterator begin() const;
 
-    typename std::set<int>::const_iterator end() const;
+    std::set<int>::const_iterator end() const;
 
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query,
         int document_id) const;
@@ -56,6 +54,7 @@ private:
     const std::set<std::string> stop_words_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
     std::map<int, DocumentData> documents_;
+    std::map<int, std::set<std::string>> id_doc_;
     std::set<int> document_ids_;
 
     bool IsStopWord(const std::string& word) const;
@@ -89,6 +88,8 @@ private:
     std::vector<Document> FindAllDocuments(const Query& query,
         DocumentPredicate document_predicate) const;
 };
+
+using namespace std::string_literals;
 
 template <typename StringContainer>
 SearchServer::SearchServer(const StringContainer& stop_words)
