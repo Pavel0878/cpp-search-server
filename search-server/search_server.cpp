@@ -31,6 +31,7 @@ void SearchServer::AddDocument(int document_id, const string_view document, Docu
     document_ids_.insert(document_id);
 }
 
+
 vector<Document> SearchServer::FindTopDocuments(const string_view raw_query, DocumentStatus status) const {
     return FindTopDocuments(
         raw_query, [status](int document_id, DocumentStatus document_status, int rating) {
@@ -41,6 +42,7 @@ vector<Document> SearchServer::FindTopDocuments(const string_view raw_query, Doc
 vector<Document> SearchServer::FindTopDocuments(const string_view raw_query) const {
     return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
 }
+
 
 int SearchServer::GetDocumentCount() const {
     return static_cast<int>(documents_.size());
@@ -86,6 +88,7 @@ void SearchServer::RemoveDocument(const execution::parallel_policy& par, int doc
     document_ids_.erase(document_id);
     id_doc_.erase(document_id);
 }
+
 
 set<int>::const_iterator SearchServer::begin() const {
     return document_ids_.begin();
@@ -146,6 +149,7 @@ tuple<vector<string_view>, DocumentStatus> SearchServer::MatchDocument(const exe
 
     matched_words.resize(query.plus_words.size());
 
+
     auto dis =
         copy_if(par, query.plus_words.begin(), query.plus_words.end(), matched_words.begin(),
             [this, document_id](auto& word) {
@@ -186,11 +190,7 @@ int SearchServer::ComputeAverageRating(const vector<int>& ratings) {
     if (ratings.empty()) {
         return 0;
     }
-    int rating_sum = 0;
-    for (const int rating : ratings) {
-        rating_sum += rating;
-    }
-    return rating_sum / static_cast<int>(ratings.size());
+    return accumulate(ratings.begin(), ratings.end(), 0) / static_cast<int>(ratings.size());
 }
 
 SearchServer::QueryWord SearchServer::ParseQueryWord(const string_view text) const {

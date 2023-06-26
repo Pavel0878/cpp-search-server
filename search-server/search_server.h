@@ -135,7 +135,8 @@ std::vector<Document> SearchServer::FindTopDocuments(ExecutionPolicy&& policy, c
 
     sort(policy, matched_documents.begin(), matched_documents.end(),
         [](const Document& lhs, const Document& rhs) {
-            if (std::abs(lhs.relevance - rhs.relevance) < 1e-6) {
+            constexpr double EPSILON = 1e-6;
+            if (std::abs(lhs.relevance - rhs.relevance) < EPSILON) {
                 return lhs.rating > rhs.rating;
             }
             else {
@@ -170,7 +171,8 @@ std::vector<Document> SearchServer::FindTopDocuments(ExecutionPolicy&& policy, c
 template <typename DocumentPredicate, typename ExecutionPolicy>
 std::vector<Document> SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const Query& query,
     DocumentPredicate document_predicate) const {
-    ConcurrentMap<int, double> document_to_relevance_plus(100);
+    size_t COUNT_MAP = 100;
+    ConcurrentMap<int, double> document_to_relevance_plus(COUNT_MAP);
 
     std::for_each(policy, query.plus_words.begin(), query.plus_words.end(),
         [this, &document_to_relevance_plus, document_predicate]
